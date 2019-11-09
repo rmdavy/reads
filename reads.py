@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sqlite3, argparse
+import sqlite3, argparse, os
 
 def banner():
 	print ("""
@@ -15,7 +15,7 @@ def banner():
 |__/  |__/|________/|__/  |__/|_______/  \______/ 
 
 REsponder Active Database Sifter
-Version 0.1a
+Version 0.1b
 Richard Davy 2019
 \n
 """)
@@ -96,18 +96,33 @@ cgroup.add_argument('-c', '--cleartext', dest='cleartext', default='', type=str,
 cgroup.add_argument('-f', '--filter', dest='filter', default='', type=str, help='-f 192.168.1 (ip to filter)')
 
 #Create group Config options
+#DELETE FROM Responder;
 cgroup = parser.add_argument_group('Config')
 cgroup.add_argument('-p', '--pathtodb', dest='pathtodb', default='/usr/share/responder/Responder.db', type=str, help='-p /usr/share/responder/Responder.db (path to Responder.db - default /usr/share/responder/Responder.db)')
+cgroup.add_argument('-edb', '--emptydb', dest='edb', default='', type=str, help='-edb /pathtodb/Responder.db )')
 
 #Parse commandline options
 args = parser.parse_args()
 
 #Create dbconnection
 cursor = DbConnect(args.pathtodb)
-
+print(args.pathtodb)
 banner()
 
-#If condution met parse for Basic Auth Details then quit
+#If condition met delete data from responder.db file
+if args.edb!="":
+	print ("Cleaning "+args.edb+" of Entries:")
+	if os.path.isfile(args.edb):
+		answer=input("[!] Are you sure you want to empty "+args.edb+" (y/n) ")
+		if answer=="y":
+			edbcursor = DbConnect(args.edb)
+			res = edbcursor.execute("DELETE FROM Poisoned")
+			res = edbcursor.execute("DELETE FROM Responder")
+			res = edbcursor.execute("Commit")
+			print("[*] Done")
+	quit()
+
+#If condition met parse for Basic Auth Details then quit
 if args.basic.upper()=="Y":
 	print ("Dumping Basic Authentication Details:")
 	Basic = GetResponderCompleteBasic(cursor,args.filter)
